@@ -4,10 +4,23 @@ namespace Bare\Database;
 
 use Illuminate\Database\Capsule\Manager as Capsule;
 
+/**
+ * Class Database
+ *
+ * This class sets up and configures the Eloquent ORM using the Capsule manager.
+ *
+ * @package Bare\Database
+ */
 class Database {
 
+  /**
+   * Database constructor.
+   *
+   * Initializes the database connection using environment variables and sets up the Eloquent ORM.
+   */
   public function __construct() {
     $capsule = new Capsule();
+    //@TODO: Add support for other database drivers.
     $capsule->addConnection([
       'driver' => 'mysql',
       'host' => $_ENV['DB_HOST'],

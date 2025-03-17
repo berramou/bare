@@ -1,4 +1,4 @@
-name: php-project
+name: bare
 recipe: lamp
 config:
   webroot: ./public

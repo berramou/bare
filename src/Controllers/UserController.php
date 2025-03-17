@@ -27,23 +27,19 @@ class UserController extends BaseController {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $request = new FormRequest($form);
       if ($request->handle($_POST)) {
-        if (!$form->validate()) {
-          $this->view->addData(['errors' => $form->getErrors()]);
-        }
-        else {
-          $data = $form->getData();
-          $user = new User();
-          $user->name = $data['name'];
-          $user->email = $data['email'];
-          $user->password = $data['password'];
-          $user->save();
-          // Add a success message to the template
-          $successMessage = 'User created successfully!';
-          return new HtmlResponse($this->view->render('user/create', [
-            'form' => $form,
-            'successMessage' => $successMessage,
-          ]));
-        }
+        $data = $form->getData();
+        $user = new User();
+        $user->name = $data['name'];
+        $user->email = $data['email'];
+        // @todo: Hash the password before saving it, i'm not doing it because just an example.
+        $user->password = $data['password'];
+        $user->save();
+        // Add a success message to the template
+        $successMessage = 'User created successfully!';
+        return new HtmlResponse($this->view->render('user/create', [
+          'form' => $form,
+          'successMessage' => $successMessage,
+        ]));
       }
       else {
         // Pass errors to the template

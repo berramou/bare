@@ -1,13 +1,9 @@
 <?php declare(strict_types=1);
-global $router;
 
-use Laminas\Diactoros\ServerRequestFactory;
-use Laminas\HttpHandlerRunner\Emitter\SapiEmitter;
+require_once __DIR__ . '/../vendor/autoload.php';
 
-require __DIR__ . '/../bootstrap.php';
+use Bare\Application;
 
-$request = ServerRequestFactory::fromGlobals();
-
-$response = $router->dispatch($request);
-
-(new SapiEmitter())->emit($response);
+// Initialize and run the application.
+$app = new Application();
+$app->handleRequest();

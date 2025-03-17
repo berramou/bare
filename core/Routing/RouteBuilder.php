@@ -2,95 +2,61 @@
 
 namespace Bare\Routing;
 
-use League\Route\Route;
+use League\Container\Container;
 use League\Route\Router;
-use Psr\Container\ContainerInterface;
+use League\Route\Strategy\ApplicationStrategy;
 
 /**
+ * Class RouteBuilder
  *
+ * This class is responsible for building and configuring the router with routes.
+ *
+ * @package Bare\Routing
  */
-class RouteBuilder {
+class RouteBuilder extends Router {
+  /**
+   * @var \League\Route\Router The router instance.
+   */
+
+  private Router $router;
+  /**
+   * @var \League\Container\Container The dependency injection container.
+   */
+  private Container $container;
 
   /**
-   * The singleton Router instance.
+   * RouteBuilder constructor.
    *
-   * @var \League\Route\Router|null
+   * @param \League\Container\Container $container
+   *   The dependency injection container.
    */
-  protected static ?Router $router = NULL;
+  public function __construct(Container $container) {
+    parent::__construct();
+    $this->container = $container;
+    $this->router = new Router();
+    $strategy = new ApplicationStrategy();
+    $this->router->setStrategy($strategy);
 
-  /**
-   * The container instance.
-   *
-   * @var \Psr\Container\ContainerInterface|null
-   */
-  protected static ?ContainerInterface $container = NULL;
-
-  /**
-   * Initialize the Router and Container.
-   *
-   * @param \Psr\Container\ContainerInterface $container
-   *   The container instance.
-   */
-  public static function initialize(ContainerInterface $container): void {
-    if (self::$router === NULL) {
-      self::$router = new Router();
-      self::$container = $container;
-    }
+    // Load all routes from the routes directory.
+    $this->loadRoutes();
   }
 
   /**
-   * Define a GET route.
+   * Load all route definition files in the routes directory.
    *
-   * @param string $path
-   *   The route path.
-   * @param array $action
-   *   The controller and method.
-   *
-   * @return \League\Route\Route
+   * This method loads all PHP files in the routes directory and registers the routes
+   * defined in those files with the router.
    */
-  public static function get(string $path, array $action): Route {
-    if (self::$router === NULL) {
-      throw new \RuntimeException('RouteBuilder has not been initialized. Call RouteBuilder::initialize() first.');
+  private function loadRoutes(): void {
+    $routeFiles = glob(__DIR__ . '/../../routes/*.php');
+    foreach ($routeFiles as $file) {
+      if (file_exists($file)) {
+        $routeDefinitions = require $file;
+        if (is_callable($routeDefinitions)) {
+          $routeDefinitions($this, $this->container);
+        }
+      }
     }
-
-    [$controller, $method] = $action;
-    return self::$router->get($path, function($request) use ($controller, $method) {
-      $controllerInstance = self::$container->get($controller);
-      return $controllerInstance->$method($request);
-    });
-  }
-
-  /**
-   * Define a POST route.
-   *
-   * @param string $path
-   * @param array $action
-   *
-   * @return \League\Route\Route
-   */
-  public static function post(string $path, $action): Route {
-    if (self::$router === NULL) {
-      throw new \RuntimeException('RouteBuilder has not been initialized. Call RouteBuilder::initialize() first.');
-    }
-
-    [$controller, $method] = $action;
-    return self::$router->post($path, function($request) use ($controller, $method) {
-      $controllerInstance = self::$container->get($controller);
-      return $controllerInstance->$method($request);
-    });
-  }
-
-  /**
-   * Get the Router instance.
-   *
-   * @return \League\Route\Router
-   */
-  public static function getRouter(): Router {
-    if (self::$router === NULL) {
-      throw new \RuntimeException('RouteBuilder has not been initialized. Call RouteBuilder::initialize() first.');
-    }
-
-    return self::$router;
   }
 
 }
