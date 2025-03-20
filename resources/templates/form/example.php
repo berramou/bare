@@ -4,5 +4,4 @@
 
 <form method="POST" action="/form/example">
   <?= $form->render() ?>
-  <button type="submit">Submit</button>
 </form>

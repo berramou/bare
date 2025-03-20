@@ -1,55 +1,98 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers;
 
 use App\Models\User;
 use Bare\Controllers\BaseController;
+use Bare\Enum\FlashMessageType;
 use Bare\Forms\Form;
-use Bare\Forms\FormRequest;
+use Bare\Services\FlashMessageService;
+use Laminas\Diactoros\Response\RedirectResponse;
+use Laminas\Diactoros\ServerRequest;
 use Laminas\Diactoros\Response\HtmlResponse;
 use Laminas\Diactoros\Response\JsonResponse;
+use League\Plates\Engine;
 
-class UserController extends BaseController {
-
-  public function index(): JsonResponse {
-    return new JsonResponse(User::all());
-  }
-
-  public function create(): HtmlResponse {
-    $form = new Form();
-    $form->addField('name', 'text', ['label' => 'Name', 'required' => TRUE])
-      ->addField('email', 'email', ['label' => 'Email', 'required' => TRUE])
-      ->addField('password', 'password', [
-        'label' => 'Password',
-        'required' => TRUE,
-      ]);
-
-    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-      $request = new FormRequest($form);
-      if ($request->handle($_POST)) {
-        $data = $form->getData();
-        $user = new User();
-        $user->name = $data['name'];
-        $user->email = $data['email'];
-        // @todo: Hash the password before saving it, i'm not doing it because just an example.
-        $user->password = $data['password'];
-        $user->save();
-        // Add a success message to the template
-        $successMessage = 'User created successfully!';
-        return new HtmlResponse($this->view->render('user/create', [
-          'form' => $form,
-          'successMessage' => $successMessage,
-        ]));
-      }
-      else {
-        // Pass errors to the template
-        $errors = $form->getErrors();
-        $this->view->addData(['errors' => $errors]);
-      }
+class UserController extends BaseController
+{
+    public function __construct(
+        Engine $view,
+        readonly protected FlashMessageService $flashMessageService
+    ) {
+        parent::__construct($view);
     }
 
-    // Render the form using Plates
-    return new HtmlResponse($this->view->render('user/create', ['form' => $form]));
-  }
+    public function index(): JsonResponse
+    {
+        return new JsonResponse(User::all());
+    }
 
+    public function create(): HtmlResponse
+    {
+        // Render the form.
+        $form = $this->view->render(
+            'user/create',
+            ['form' => $this->createForm()]
+        );
+
+        return new HtmlResponse($form);
+    }
+
+    public function store(ServerRequest $request): HtmlResponse|RedirectResponse
+    {
+        $form = $this->createForm();
+        $data = $request->getParsedBody();
+        $form->setData($data);
+
+        if ($form->validate()) {
+            $data = $form->getData();
+            $user = new User();
+            $user->name = $data['name'];
+            $user->email = $data['email'];
+            $user->password = md5($data['password']);
+            $user->save();
+
+            $this->flashMessageService->add(
+                FlashMessageType::SUCCESS,
+                "User created successfully"
+            );
+        } else {
+            $this->flashMessageService->add(FlashMessageType::ERROR, 'Something went wrong.');
+            // Pass errors to the template
+            $errors = $form->getErrors();
+            $this->view->addData(['errors' => $errors]);
+
+            return new HtmlResponse(
+                $this->view->render(
+                    'user/create',
+                    ['form' => $this->createForm()]
+                )
+            );
+        }
+
+        // Render the form.
+        return new RedirectResponse('/user/create');
+    }
+
+    /**
+     * Create and return a form instance.
+     *
+     * @return Form
+     */
+    private function createForm(): Form
+    {
+        $form = new Form();
+        $form
+          ->addField('name', 'text', ['label' => 'Name', 'required' => true])
+          ->addField('email', 'email', ['label' => 'Email', 'required' => true])
+          ->addField('password', 'password', [
+            'label' => 'Password',
+            'required' => true,
+          ])
+        ->addField('submit', 'submit', ['label' => 'Submit']);
+
+        return $form;
+    }
 }

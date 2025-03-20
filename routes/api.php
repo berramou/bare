@@ -2,6 +2,9 @@
 
 use App\Controllers\UserController;
 
-return function($router, $container) {
-  $router->get('api/users', [$container->get(UserController::class), 'index']);
+return function ($router, $container) {
+    $router->get(
+      'api/users',
+      [$container->get(UserController::class), 'index']
+    );
 };

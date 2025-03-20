@@ -8,7 +8,6 @@
   </div>
 <?php endif; ?>
 
-<form method="POST" action="/user/create">
+<form method="POST" action="/user/store">
   <?= $form->render() ?>
-  <button type="submit">Submit</button>
 </form>

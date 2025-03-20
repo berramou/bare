@@ -9,6 +9,7 @@
   <title><?= $this->e($title) ?></title>
 </head>
 <body>
+<?= $this->insert('flash/messages') ?>
 <?= $this->section('content') ?>
 </body>
 </html>
