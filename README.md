@@ -84,7 +84,8 @@ class FormController extends BaseController
 
         // Add fields to the form.
         $form->addField('name', 'text', ['label' => 'Name', 'required' => true])
-             ->addField('email', 'email', ['label' => 'Email', 'required' => true]);
+             ->addField('email', 'email', ['label' => 'Email', 'required' => true])
+             ->addField('submit', 'submit', ['label' => 'Submit']);
 
         // Render the form view.
         return $this->view->render('form/some-form', ['form' => $form]);
@@ -112,7 +113,6 @@ Create the form template in `resources/templates/form/some-form.php`.
 ```php
 <form method="POST" action="/form/example">
     <?= $form->render() ?>
-    <button type="submit">Submit</button>
 </form>
 ```
 
